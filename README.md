@@ -6,9 +6,10 @@
 - Upgraded project to be an ESModule (Required by `update-notifier`)
 - Fixed various import issues
 - Upgraded all packages to latest (as of 17/2/23)
-- added name to default function
-- convert vars to let/const
-- added JSDoc types to index.js + @ts-check / tsconfig for checking
+- Added name to default function
+- Modernized a bit
+  - convert vars to let/const
+  - added JSDoc types + @ts-check / tsconfig for checking
 
 # node-sync-files
 

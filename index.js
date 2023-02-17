@@ -18,7 +18,7 @@ sync("./test.txt", "D:/test/test.txt", { watch: true }, (eventName, msg) =>
 /**
  * @typedef {"error" | "copy" | "remove" | "watch" | "max-depth" | "no-delete" | "verbose"} WatcherEvent
  * @typedef {{depth?: number, delete?: boolean, watch?: boolean, "notify-update"?: boolean, version?: boolean, verbose?: boolean, help?: boolean}} OptsType
- * @typedef {(eventName: WatcherEvent , eventMsg: string) => void} NotifyFunc
+ * @typedef {(event: WatcherEvent, data: any) => void} NotifyFunc // polymorphism (making data right) seems like a pain.
  */
 
 /**
@@ -125,6 +125,7 @@ function mirror(source, target, opts, notify, depth) {
     if (fs.existsSync(target)) {
       return deleteIfOpts(target, opts, notify);
     }
+    return false; // source missing and no delete is invalid
   }
 
   let targetStat;
