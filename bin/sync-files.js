@@ -16,7 +16,7 @@ import path from "path";
 
 const pkg = require("../package.json");
 
-var opts = {
+const opts = {
   boolean: ["help", "delete", "watch", "version", "verbose", "notify-update"],
   string: ["depth"],
   alias: {
@@ -59,7 +59,7 @@ var opts = {
   },
 };
 
-var notifyPriority = {
+const notifyPriority = {
   error: "high",
   copy: "normal",
   remove: "normal",
@@ -89,9 +89,9 @@ function help() {
     chalk.yellow("target")
   );
   console.log("");
-  var keys = opts.boolean
+  const keys = opts.boolean
     .map(function (opt) {
-      var key = chalk.blue("--[no-]" + opt);
+      let key = chalk.blue("--[no-]" + opt);
       if (Array.isArray(opts.alias[opt]) && opts.alias[opt].length > 0) {
         key +=
           ", " +
@@ -107,8 +107,8 @@ function help() {
     })
     .concat(
       opts.string.map(function (opt) {
-        var arg = "<" + (opts.type[opt] || "value") + ">";
-        var key = chalk.blue("--" + opt) + "=" + arg;
+        const arg = "<" + (opts.type[opt] || "value") + ">";
+        let key = chalk.blue("--" + opt) + "=" + arg;
         if (Array.isArray(opts.alias[opt]) && opts.alias[opt].length > 0) {
           key +=
             ", " +
@@ -135,7 +135,7 @@ function help() {
   });
 }
 
-var argv = minimist(process.argv.slice(2), opts);
+const argv = minimist(process.argv.slice(2), opts);
 
 if (argv.help) {
   help();
@@ -159,7 +159,76 @@ if (argv["notify-update"]) {
   updateNotifier({ pkg: pkg }).notify();
 }
 
-var root = process.cwd();
+const root = process.cwd();
+
+/**
+ * @param {WatchEventType} event
+ * @param {any} data
+ * @returns {void}
+ */
+function notify(event, data) {
+  var priority = notifyPriority[event] || "low";
+
+  if (!opts.verbose && priority === "low") {
+    return;
+  }
+
+  switch (event) {
+    case "error":
+      console.error(chalk.bold.red(data.message || data));
+      process.exit(data.code || 2);
+      break;
+
+    case "copy":
+      console.log(
+        "%s %s to %s",
+        chalk.bold("COPY"),
+        chalk.yellow(path.relative(root, data[0])),
+        chalk.yellow(path.relative(root, data[1]))
+      );
+      break;
+
+    case "remove":
+      console.log(
+        "%s %s",
+        chalk.bold("DELETE"),
+        chalk.yellow(path.relative(root, data))
+      );
+      break;
+
+    case "watch":
+      console.log(
+        "%s %s",
+        chalk.bold("WATCHING"),
+        chalk.yellow(path.relative(root, data))
+      );
+      break;
+
+    case "max-depth":
+      console.log(
+        "%s: %s too deep",
+        chalk.bold.dim("MAX-DEPTH"),
+        chalk.yellow(path.relative(root, data))
+      );
+      break;
+
+    case "no-delete":
+      console.log(
+        "%s: %s extraneous but not deleted (use %s)",
+        chalk.bold.dim("IGNORED"),
+        chalk.yellow(path.relative(root, data)),
+        chalk.blue("--delete")
+      );
+      break;
+
+    // Fallback: forgotten logs, displayed only in verbose mode
+    case "verbose":
+    default:
+      if (argv.verbose) {
+        console.log(event, data);
+      }
+  }
+}
 
 sync(
   path.resolve(argv._[0]),
@@ -169,66 +238,5 @@ sync(
     delete: argv.delete,
     depth: Number(argv.depth),
   },
-  function (event, data) {
-    var priority = notifyPriority[event] || "low";
-
-    if (!opts.verbose && priority === "low") {
-      return;
-    }
-
-    switch (event) {
-      case "error":
-        console.error(chalk.bold.red(data.message || data));
-        process.exit(data.code || 2);
-        break;
-
-      case "copy":
-        console.log(
-          "%s %s to %s",
-          chalk.bold("COPY"),
-          chalk.yellow(path.relative(root, data[0])),
-          chalk.yellow(path.relative(root, data[1]))
-        );
-        break;
-
-      case "remove":
-        console.log(
-          "%s %s",
-          chalk.bold("DELETE"),
-          chalk.yellow(path.relative(root, data))
-        );
-        break;
-
-      case "watch":
-        console.log(
-          "%s %s",
-          chalk.bold("WATCHING"),
-          chalk.yellow(path.relative(root, data))
-        );
-        break;
-
-      case "max-depth":
-        console.log(
-          "%s: %s too deep",
-          chalk.bold.dim("MAX-DEPTH"),
-          chalk.yellow(path.relative(root, data))
-        );
-        break;
-
-      case "no-delete":
-        console.log(
-          "%s: %s extraneous but not deleted (use %s)",
-          chalk.bold.dim("IGNORED"),
-          chalk.yellow(path.relative(root, data)),
-          chalk.blue("--delete")
-        );
-        break;
-
-      // Fallback: forgotten logs, displayed only in verbose mode
-      default:
-        if (argv.verbose) {
-          console.log(event, data);
-        }
-    }
-  }
+  notify
 );

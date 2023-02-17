@@ -16,8 +16,9 @@ sync("./test.txt", "D:/test/test.txt", { watch: true }, (eventName, msg) =>
 );
 
 /**
+ * @typedef {"error" | "copy" | "remove" | "watch" | "max-depth" | "no-delete" | "verbose"} WatcherEvent
  * @typedef {{depth?: number, delete?: boolean, watch?: boolean, "notify-update"?: boolean, version?: boolean, verbose?: boolean, help?: boolean}} OptsType
- * @typedef {(eventName: string, eventMsg: string) => void} NotifyFunc
+ * @typedef {(eventName: WatcherEvent , eventMsg: string) => void} NotifyFunc
  */
 
 /**
@@ -29,6 +30,7 @@ sync("./test.txt", "D:/test/test.txt", { watch: true }, (eventName, msg) =>
  * @returns boolean - false if errors occurred, true otherwise
  */
 export default function sync(source, target, opts, notify) {
+  notify("verbose", `Starting watcher (${source} => ${target})`);
   opts = defaults(opts || {}, {
     watch: false,
     delete: false,
