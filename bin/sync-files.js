@@ -12,6 +12,7 @@ import chalk from "chalk";
 const { bold, cyan, blue, yellow, dim } = chalk;
 import { resolve, relative } from "path";
 import sync from "../index.js";
+import path from "path";
 
 const pkg = require("../package.json");
 
