@@ -7,6 +7,8 @@
 - Fixed various import issues
 - Upgraded all packages to latest (as of 17/2/23)
 - added name to default function
+- convert vars to let/const
+- added JSDoc types to index.js + @ts-check / tsconfig for checking
 
 # node-sync-files
 

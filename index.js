@@ -1,3 +1,4 @@
+// @ts-check
 "use strict";
 
 // Recreate missing reference to require
@@ -10,7 +11,24 @@ import fs from "fs-extra";
 import path from "path";
 import chokidar from "chokidar";
 
-export default function syncFiles(source, target, opts, notify) {
+sync("./test.txt", "D:/test/test.txt", { watch: true }, (eventName, msg) =>
+  console.log(`${eventName}: ${msg}`)
+);
+
+/**
+ * @typedef {{depth?: number, delete?: boolean, watch?: boolean, "notify-update"?: boolean, version?: boolean, verbose?: boolean, help?: boolean}} OptsType
+ * @typedef {(eventName: string, eventMsg: string) => void} NotifyFunc
+ */
+
+/**
+ *
+ * @param {string} source
+ * @param {string} target
+ * @param {OptsType} opts
+ * @param {NotifyFunc} notify
+ * @returns boolean - false if errors occurred, true otherwise
+ */
+export default function sync(source, target, opts, notify) {
   opts = defaults(opts || {}, {
     watch: false,
     delete: false,
@@ -23,7 +41,7 @@ export default function syncFiles(source, target, opts, notify) {
   }
 
   // Initial mirror
-  var mirrored = mirror(source, target, opts, notify, 0);
+  const mirrored = mirror(source, target, opts, notify, 0);
 
   if (!mirrored) {
     return false;
@@ -47,39 +65,67 @@ export default function syncFiles(source, target, opts, notify) {
       .on("unlinkDir", watcherDestroy(source, target, opts, notify))
       .on("error", watcherError(opts, notify));
   }
+
+  return true;
 }
 
+/**
+ *
+ * @param {string} source
+ * @param {string} target
+ * @param {OptsType} opts
+ * @param {NotifyFunc} notify
+
+ */
 function watcherCopy(source, target, opts, notify) {
   return function (f, stats) {
     copy(f, path.join(target, path.relative(source, f)), notify);
   };
 }
 
+/**
+ * @param {string} source
+ * @param {string} target
+ * @param {OptsType} opts
+ * @param {NotifyFunc} notify
+ */
 function watcherDestroy(source, target, opts, notify) {
   return function (f) {
-    deleteExtra(path.join(target, path.relative(source, f)), opts, notify);
+    deleteIfOpts(path.join(target, path.relative(source, f)), opts, notify);
   };
 }
 
+/**
+ * @param {OptsType} opts
+ * @param {NotifyFunc} notify
+ */
 function watcherError(opts, notify) {
   return function (err) {
     notify("error", err);
   };
 }
 
+/**
+ * @param {string} source
+ * @param {string} target
+ * @param {OptsType} opts
+ * @param {NotifyFunc} notify
+ * @param {number} depth
+ * @returns {boolean} false if errors occurred, true otherwise
+ */
 function mirror(source, target, opts, notify, depth) {
   // Specifc case where the very source is gone
-  var sourceStat;
+  let sourceStat;
   try {
     sourceStat = fs.statSync(source);
   } catch (e) {
     // Source not found: destroy target?
     if (fs.existsSync(target)) {
-      return deleteExtra(target, opts, notify);
+      return deleteIfOpts(target, opts, notify);
     }
   }
 
-  var targetStat;
+  let targetStat;
   try {
     targetStat = fs.statSync(target);
   } catch (e) {
@@ -94,7 +140,7 @@ function mirror(source, target, opts, notify, depth) {
     }
 
     // copy from source to target
-    var copied = fs.readdirSync(source).every(function (f) {
+    const copied = fs.readdirSync(source).every(function (f) {
       return mirror(
         path.join(source, f),
         path.join(target, f),
@@ -105,10 +151,10 @@ function mirror(source, target, opts, notify, depth) {
     });
 
     // check for extraneous
-    var deletedExtra = fs.readdirSync(target).every(function (f) {
+    const deletedExtra = fs.readdirSync(target).every(function (f) {
       return (
         fs.existsSync(path.join(source, f)) ||
-        deleteExtra(path.join(target, f), opts, notify)
+        deleteIfOpts(path.join(target, f), opts, notify)
       );
     });
 
@@ -142,7 +188,14 @@ function mirror(source, target, opts, notify, depth) {
   }
 }
 
-function deleteExtra(fileordir, opts, notify) {
+/**
+ *
+ * @param {string} fileordir
+ * @param {OptsType} opts
+ * @param {NotifyFunc} notify
+ * @returns
+ */
+function deleteIfOpts(fileordir, opts, notify) {
   if (opts.delete) {
     return destroy(fileordir, notify);
   } else {
@@ -151,6 +204,13 @@ function deleteExtra(fileordir, opts, notify) {
   }
 }
 
+/**
+ *
+ * @param {string} source
+ * @param {string} target
+ * @param {NotifyFunc} notify
+ * @returns
+ */
 function copy(source, target, notify) {
   notify("copy", [source, target]);
   try {
@@ -162,6 +222,11 @@ function copy(source, target, notify) {
   }
 }
 
+/**
+ * @param {string} fileordir
+ * @param {NotifyFunc} notify
+ * @returns
+ */
 function destroy(fileordir, notify) {
   notify("remove", fileordir);
   try {
