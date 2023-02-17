@@ -10,7 +10,7 @@ import fs from "fs-extra";
 import path from "path";
 import chokidar from "chokidar";
 
-export default function (source, target, opts, notify) {
+export default function syncFiles(source, target, opts, notify) {
   opts = defaults(opts || {}, {
     watch: false,
     delete: false,

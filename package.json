@@ -30,11 +30,11 @@
   "type": "module",
   "homepage": "https://github.com/lmtm/node-sync-files",
   "dependencies": {
-    "chalk": "^0.5.1",
-    "chokidar": "^1.0.0-rc3",
+    "chalk": "^5.2.0",
+    "chokidar": "^3.5.3",
     "fs-extra": "^11.1.0",
     "lodash": "^4.17.21",
-    "minimist": "^1.1.0",
+    "minimist": "^1.2.8",
     "update-notifier": "^6.0.2"
   },
   "devDependencies": {
