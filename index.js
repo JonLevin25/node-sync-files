@@ -1,5 +1,9 @@
 "use strict";
 
+// Recreate missing reference to require
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+
 import _ from "lodash";
 const { defaults } = _;
 import fs from "fs-extra";

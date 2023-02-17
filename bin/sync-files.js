@@ -2,6 +2,10 @@
 
 "use strict";
 
+// Recreate missing reference to require
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+
 import minimist from "minimist";
 import updateNotifier from "update-notifier";
 import chalk from "chalk";
@@ -9,7 +13,7 @@ const { bold, cyan, blue, yellow, dim } = chalk;
 import { resolve, relative } from "path";
 import sync from "../index.js";
 
-import pkg from "../package.json" assert { type: "json" };
+const pkg = require("../package.json");
 
 var opts = {
   boolean: ["help", "delete", "watch", "version", "verbose", "notify-update"],
